@@ -198,8 +198,8 @@ class trainer:
         # optimizer
         betas = (self.config.beta1, self.config.beta2)
         if self.optimizer == 'adam':
-            self.opt_g = Adam(filter(lambda p: p.requires_grad, self.G.parameters()), lr=self.lr, betas=betas, weight_decay=0.0)
-            self.opt_d = Adam(filter(lambda p: p.requires_grad, self.D.parameters()), lr=self.lr, betas=betas, weight_decay=0.0)
+            self.opt_g = Adam([p for p in self.G.parameters() if p.requires_grad], lr=self.lr, betas=betas, weight_decay=0.0)
+            self.opt_d = Adam([p for p in self.D.parameters() if p.requires_grad], lr=self.lr, betas=betas, weight_decay=0.0)
         
 
     def feed_interpolated_input(self, x):
@@ -247,7 +247,7 @@ class trainer:
         
         
         for step in range(2, self.max_resl+1+5):
-            for iter in tqdm(range(0,(self.trns_tick*2+self.stab_tick*2)*self.TICK, self.loader.batchsize)):
+            for iter in tqdm(list(range(0,(self.trns_tick*2+self.stab_tick*2)*self.TICK, self.loader.batchsize))):
                 self.globalIter = self.globalIter+1
                 self.stack = self.stack + self.loader.batchsize
                 if self.stack > ceil(len(self.loader.dataset)):
@@ -339,14 +339,14 @@ class trainer:
                     torch.save(self.get_state('dis'), save_path)
                     save_path = os.path.join(path, ngen)
                     torch.save(self.get_state('gen'), save_path)
-                    print('[snapshot] model saved @ {}'.format(path))
+                    print(('[snapshot] model saved @ {}'.format(path)))
 
 
 ## perform training.
-print '----------------- configuration -----------------'
-for k, v in vars(config).items():
-    print('  {}: {}').format(k, v)
-print '-------------------------------------------------'
+print('----------------- configuration -----------------')
+for k, v in list(vars(config).items()):
+    print(('  {}: {}').format(k, v))
+print('-------------------------------------------------')
 torch.backends.cudnn.benchmark = True           # boost speed.
 trainer = trainer(config)
 trainer.train()
