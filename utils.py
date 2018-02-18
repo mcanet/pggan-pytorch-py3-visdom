@@ -14,7 +14,7 @@ def adjust_dyn_range(x, drange_in, drange_out):
     if not drange_in == drange_out:
         scale = float(drange_out[1]-drange_out[0])/float(drange_in[1]-drange_in[0])
         bias = drange_out[0]-drange_in[0]*scale
-        x = x.mul(scale).add(bias)
+        x = x * scale + bias
     return x
 
 

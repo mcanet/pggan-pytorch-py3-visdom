@@ -8,7 +8,7 @@ import torchvision.transforms as transforms
 from torch.autograd import Variable
 from torch.optim import Adam
 from tqdm import tqdm
-import tf_recorder as tensorboard
+import visdom_recorder as tensorboard # a quick fix, will fix the name later
 import utils as utils
 import numpy as np
 
@@ -51,9 +51,9 @@ class trainer:
         self.G = net.Generator(config)
         self.D = net.Discriminator(config)
         print ('Generator structure: ')
-        print(self.G.model)
+        print((self.G.model))
         print ('Discriminator structure: ')
-        print(self.D.model)
+        print((self.D.model))
         self.mse = torch.nn.MSELoss()
         if self.use_cuda:
             self.mse = self.mse.cuda()
@@ -75,7 +75,7 @@ class trainer:
         # tensorboard
         self.use_tb = config.use_tb
         if self.use_tb:
-            self.tb = tensorboard.tf_recorder()
+            self.tb = tensorboard.visdom_recorder()
         
 
     def resl_scheduler(self):
@@ -127,7 +127,7 @@ class trainer:
                     self.complete['gen'] = self.fadein['gen'].alpha*100
                 self.flag_flush_gen = False
                 self.G.module.flush_network()   # flush G
-                print(self.G.module.model)
+                print((self.G.module.model))
                 #self.Gs.module.flush_network()         # flush Gs
                 self.fadein['gen'] = None
                 self.complete['gen'] = 0.0
@@ -138,7 +138,7 @@ class trainer:
                     self.complete['dis'] = self.fadein['dis'].alpha*100
                 self.flag_flush_dis = False
                 self.D.module.flush_network()   # flush and,
-                print(self.D.module.model)
+                print((self.D.module.model))
                 self.fadein['dis'] = None
                 self.complete['dis'] = 0.0
                 if floor(self.resl) < self.max_resl and self.phase != 'final':
@@ -304,9 +304,9 @@ class trainer:
                     self.tb.add_scalar('data/loss_d', loss_d.data[0], self.globalIter)
                     self.tb.add_scalar('tick/lr', self.lr, self.globalIter)
                     self.tb.add_scalar('tick/cur_resl', int(pow(2,floor(self.resl))), self.globalIter)
-                    self.tb.add_image_grid('grid/x_test', 4, utils.adjust_dyn_range(x_test.data.float(), [-1,1], [0,1]), self.globalIter)
-                    self.tb.add_image_grid('grid/x_tilde', 4, utils.adjust_dyn_range(self.x_tilde.data.float(), [-1,1], [0,1]), self.globalIter)
-                    self.tb.add_image_grid('grid/x_intp', 4, utils.adjust_dyn_range(self.x.data.float(), [-1,1], [0,1]), self.globalIter)
+                    self.tb.add_image_grid('grid/x_test', utils.adjust_dyn_range(x_test.data.cpu().numpy(), [-1,1], [0,1]), self.globalIter)
+                    self.tb.add_image_grid('grid/x_tilde',utils.adjust_dyn_range(self.x_tilde.data.cpu().numpy(), [-1,1], [0,1]), self.globalIter)
+                    self.tb.add_image_grid('grid/x_intp', utils.adjust_dyn_range(self.x.data.cpu().numpy(), [-1,1], [0,1]), self.globalIter)
 
 
     def get_state(self, target):
