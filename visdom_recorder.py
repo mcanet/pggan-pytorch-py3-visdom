@@ -15,31 +15,30 @@ import time
 class visdom_recorder:
     def __init__(self):
         self.viz = Visdom()
-        time.sleep(1)
+        time.sleep(1) #this is only necessary if your network is somehow slow like mine
         assert self.viz.check_connection(), 'Visdom server connection failed, start server with python -m visdom.server and default port = 8097'
         self.windows = {}
 
 
     def add_scalar(self, tag, val, niter):
-        # val, niter = map(lambda x : np.ones(1)*x, [val, niter])
-        X = np.asarray([niter, val])
-        print('val {}'.format(val))
+        val, niter = map(lambda x : np.ones([1])*x, [val, niter]) #create array from scalar to make visdom happy
         if tag not in self.windows.keys():
-            lineplot = self.viz.scatter(Y=Y,X, env='pggan', opts=dict(showlegend=True, title=tag, legend=list([tag, 'niter'])))
+            lineplot = self.viz.line(Y=val,X=niter, opts=dict(title=tag))
             self.windows[tag] = lineplot
         else:
             win = self.windows[tag]
-            self.viz.scatter(
-                X=X,
+            self.viz.line(
+                Y=val,
+                X=niter,
                 win=win,
-                update='append'
+                update='append',
             )
 
     def add_image_grid(self, tag, x, niter):
         if tag not in self.windows.keys():
             grid = self.viz.images(
                 x,
-                opts=dict(title=tag, env='pggan', caption='At Iter {}'.format(niter))
+                opts=dict(title=tag, caption='At Iter {}'.format(niter))
             )
             self.windows[tag] = grid
         else:
