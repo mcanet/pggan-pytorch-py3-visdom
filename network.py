@@ -97,7 +97,7 @@ class Generator(nn.Module):
         elif resl==6 or resl==7 or resl==8 or resl==9 or resl==10:
             halving = True
             for i in range(int(resl)-5):
-                ndim = ndim/2
+                ndim = ndim//2
         layers = []
         layers.append(nn.Upsample(scale_factor=2, mode='nearest'))       # scale up by factor of 2.0
         if halving:
