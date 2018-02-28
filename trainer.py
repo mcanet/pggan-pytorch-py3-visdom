@@ -11,7 +11,7 @@ from tqdm import tqdm
 import visdom_recorder as tensorboard # a quick fix, will fix the name later
 import utils as utils
 import numpy as np
-
+import glob
 
 class trainer:
     def __init__(self, config):
@@ -71,7 +71,7 @@ class trainer:
         
         # define tensors, ship model to cuda, and get dataloader.
         self.renew_everything()
-        
+        self.load_snapshot()
         # tensorboard
         self.use_tb = config.use_tb
         if self.use_tb:
@@ -340,6 +340,34 @@ class trainer:
                     save_path = os.path.join(path, ngen)
                     torch.save(self.get_state('gen'), save_path)
                     print(('[snapshot] model saved @ {}'.format(path)))
+
+
+    def load_snapshot(self, path='repo/model'):
+        snapshots_file = glob.glob(os.path.join(path, '*.pth.tar'))
+        gens = [_file for _file in snapshots_file if 'gen_R' in _file]
+        diss = [_file for _file in snapshots_file if 'dis_R' in _file]
+        gens.sort()
+        diss.sort()
+        if len(gens) == 0 or len(diss) == 0:
+            print('No model detected, training from skretch')
+            return
+        gen = gens[-1]
+        dis = diss[-1]
+        assert gen[4:] == dis[4:]
+        print('Loading {} and {} from disk'.format(gen, dis))
+        for net, snap in zip([self.G, self.D], [gen, dis]):
+            _, R, T = snap.split('_') #gen Rx Txxx.pth.tar
+            T, _, _ = T.split('.') #Txxxx pth tar
+            resl = int(R[1:])
+            for i in range(3, resl+1):
+                net.module.grow_network(resl)
+                net.module.flush_network()
+            checkpoint = torch.load(snap)
+            net.module.load_state_dict(checkpoint['state_dict'])
+        self.resl = resl
+        self.globalTick = int(T[1:])
+        self.loader.renew(self.resl)
+        
 
 
 ## perform training.
